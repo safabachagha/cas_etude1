@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
+import re
 # Create your models here.
 class Category(models.Model):  # Nom de la classe en majuscule
     
@@ -14,3 +15,6 @@ class Category(models.Model):  # Nom de la classe en majuscule
 def validate_letters_only(value):
     if not re.match(r'^[A-Za-z\s]+$',value):
        raise ValidationError('the field should only contain contrain  letters' )
+def __str__(self):
+       return f"title category = {self.title}"
+   

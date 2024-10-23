@@ -1,35 +1,42 @@
 from django.db import models
-from django.core.validators import MaxValueValidator
+from django.core.validators import MaxValueValidator, FileExtensionValidator
 from categories.models import Category  # Correction de l'import
-from django.core.validators import FileExtensionValidator
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-
+from datetime import date  # Import nécessaire pour les dates
 
 class Conference(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
-    start_date = models.DateField()
+   
+
+    start_date = models.DateField(default=timezone.now)
+
     end_date = models.DateField()
     location = models.CharField(max_length=255)
     price = models.FloatField()
-    capacity = models.IntegerField(validators=[MaxValueValidator(500)])
-    program = models.FileField(upload_to='files/', validators=[FileExtensionValidator(allowed_extensions=['pdf', 'jpg', 'png', 'docx'], message='Only PDF, PNG, JPEG, or DOCX allowed')])
+    capacity=models.IntegerField(validators=[MaxValueValidator(limit_value=900,
+                                                               message="capacity must be under 900")])
+    program=models.FileField(upload_to='files/',validators=[
+        FileExtensionValidator(allowed_extensions=['pdf','png','jpeg','jpg'],message="only pdf,png,jpg,jpeg are allowed")])
+    created_at = models.DateTimeField(auto_now_add=True)  # Horodatage automatique à la création
+    updated_at = models.DateTimeField(auto_now=True)  # Horodatage automatique à chaque mise à jour
 
-    created_at = models.DateTimeField(auto_now_add=True)  # Corrected typo
-    updated_at = models.DateTimeField(auto_now=True)  # Corrected typo
-
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="conferences")  # Associating conference with a category
-
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="conferences")  # Liaison avec la catégorie
     class Meta:
-        verbose_name_plural = "conferences"
-        constraints = [
+        constraints=[
             models.CheckConstraint(
-                check=models.Q(start_date__gte=timezone.now().date()),
-                name="start_date_must_be_greater_or_equal_than_today"
+                check=models.Q(
+                    start_date__gte=timezone.now().date()
+                ),
+                name="the start date must be greater than today or equal"
             )
         ]
 
+                              
     def clean(self):
         if self.end_date <= self.start_date:
             raise ValidationError('End date must be after start date')
+    
+    def __str__(self):
+        return f"title conference = {self.title}"  # Correction de la méthode __str__
